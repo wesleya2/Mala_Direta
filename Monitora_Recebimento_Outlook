@@ -1,0 +1,27 @@
+################################
+#Criado por wgeraldo 23/02/2023#
+################################
+import win32com.client as client
+import pandas as pd
+
+Outlook_App = client.Dispatch('Outlook.Application').GetNameSpace('MAPI')
+#MY_Inbox=My_OL_App.GetDefaultFolder(16)
+Minha_Caixa=Outlook_App.Folders('conta@dominio.com').Folders('Automacao')
+Minha_Caixa_items=Minha_Caixa.Items
+
+for msg in Minha_Caixa_items:
+    if "BR Admin Account Review DBR-TI-PO013-003" in str(msg.Subject):
+        #print(msg.SenderName)
+        #print(msg.Subject)
+        #print(msg.body)
+        base = pd.read_csv(r'C:\Data\Projetos_Python_Infra\Base_users_AME.csv', delimiter=';')
+        base_index = base[base['Display_Name'] == msg.SenderName].index
+        resposta = msg.Subject.split(':')
+        if resposta[0] == 'YES':
+            base.loc[base_index, 'Manter'] = resposta[0]
+            base.to_csv(r'C:\Data\Projetos_Python_Infra\Base_users_AME.csv', index=False, sep=';')
+        elif resposta[0] == 'NO':
+            base.loc[base_index, 'Manter'] = resposta[0]
+            base.to_csv(r'C:\Data\Projetos_Python_Infra\Base_users_AME.csv', index=False, sep=';')
+        else:
+            continue
