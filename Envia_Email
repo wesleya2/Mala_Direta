@@ -1,0 +1,43 @@
+################################
+#Criado por wgeraldo 23/02/2023#
+################################
+import pandas as pd
+from pathlib import Path
+import win32com.client as win32
+
+#Configurações Gerais
+dir_base = Path(r'C:/data/Projetos_Python_Infra')
+base = pd.read_csv(dir_base / Path(r'Base_users_AME.csv'), delimiter=';')
+log_envio = {}
+outlook = win32.Dispatch('Outlook.application')
+Infra_Team = "contato@dominio.com"
+
+#Core
+for linha in range(len(base)):
+    try:
+        #Pegando first Name,Email e Login
+        Nomes = base['Display_Name'][linha]
+        sobrenome, nome = Nomes.split(",")
+        p_nome = nome.split()
+        p_nome = p_nome[0]
+        Email = base['Email'][linha]
+        Login = base['Usuario_AME'][linha]
+        #Enviando Email
+        mail = outlook.CreateItem(0)
+        #mail.SentOnBehalfOfName = "emsitsupport@dominio.com"
+        mail.VotingOptions = "YES;NO"
+        mail.To = Email
+        mail.CC = Infra_Team
+        mail.Subject = 'BR Admin Account Review DBR-TI-PO013-003'
+        mail.HTMLBody = '<p><span style="font-size:11pt"><span style="font-family:Calibri,sans-serif">Ol&aacute; {}.</span></span></p><p><span style="font-size:11pt"><span style="font-family:Calibri,sans-serif">Seguindo nossa pol&iacute;tica de gest&atilde;o de logins administrativos (DBR-TI-PO013-003_Cria&ccedil;&atilde;o-de-Contas-de-Servi&ccedil;o-e-Administrativas),<br />Trimestralmente entraremos em contato para validar se as respectivas contas destinadas a acesso a servidores e aplica&ccedil;&otilde;es ainda est&atilde;o em uso.<br />Por gentileza, pedimos que vote neste e-mail <span style="color:#e74c3c"><strong>YES</strong></span>(caso esteja em uso) ou <span style="color:#e74c3c"><strong>NO</strong></span>(para excluir a conta).</span></span></p><p><span style="font-size:11pt"><span style="font-family:Calibri,sans-serif">Admin Account: {}</span></span></p><p><span style="font-size:11pt"><span style="font-family:Calibri,sans-serif">Obrigado.</span></span></p>'.format(p_nome,Login)
+        mail.Send()
+        #Gerando log de sucesso
+        log_envio[Login] = 'Enviado'
+    except:
+        #Gerando log de erro
+        Login = base['Usuario_AME'][linha]
+        log_envio[Login] = 'Erro'
+        continue
+#Gravando Logs no diretório c:/data/Projetos_Python_Infra/ 
+log_df_envio = pd.DataFrame(list(log_envio.items()),columns=['Account', 'Status'])
+log_df_envio.to_csv(r'c:/data/Projetos_Python_Infra/Log_envio_emails_ame.csv', index=False, sep=';')
